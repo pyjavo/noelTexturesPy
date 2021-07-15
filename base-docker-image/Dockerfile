@@ -15,6 +15,8 @@ RUN pip install antspyx numpy scipy pandas matplotlib==3.1.2 scikit-learn scikit
 		dash dash_bootstrap_components dash_html_components flask \
 		chart_studio nibabel pyyaml sklearn webcolors
 
+RUN pip install git+https://github.com/NOEL-MNI/deepbrain.git#egg=deepbrain
+
 RUN rm -rf ~/.cache/pip
 
 ENV TZ=America/Montreal

@@ -3,7 +3,10 @@ import matplotlib as mpl
 mpl.use("Qt5Agg")
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
+import nibabel as nib
+from deepbrain import Extractor
 import ants
+from ants.utils.convert_nibabel import to_nibabel, from_nibabel
 import numpy as np
 import multiprocessing
 import zipfile
@@ -151,13 +154,15 @@ class noelTexturesPy:
         logger.info("performing brain extraction")
         print("performing brain extraction")
         if self._t1file != None and self._t2file != None:
-            self._mask = ants.get_mask( self._t1_n4, cleanup = 5 ).threshold_image( 1, 2 ).iMath_fill_holes(3).iMath_fill_holes(6)
+            # self._mask = ants.get_mask( self._t1_n4, cleanup = 5 ).threshold_image( 1, 2 ).iMath_fill_holes(3).iMath_fill_holes(6)
+            self._mask = self.__deepbrain(p = 0.5)
 
         if self._t1file != None and self._t2file == None:
             # low_thresh = threshold_otsu(self._t1_n4.numpy())
             # self._mask = ants.get_mask( self._t1_n4, low_thresh=low_thresh, cleanup = 5).iMath_fill_holes(6)
             # self._mask = ants.image_read('./templates/mcd_134_1_ANTsBrainExtractionMask.nii.gz')
-            self._mask = ants.get_mask( self._t1_n4, cleanup = 5 ).threshold_image( 1, 2 ).iMath_fill_holes(3).iMath_fill_holes(6)
+            # self._mask = ants.get_mask( self._t1_n4, cleanup = 5 ).threshold_image( 1, 2 ).iMath_fill_holes(3).iMath_fill_holes(6)
+            self._mask = self.__deepbrain(p = 0.5)
 
         if self._t2file != None and self._t1file == None:
             self._mask = ants.get_mask( self._t2_n4, cleanup = 5 ).threshold_image( 1, 2 ).iMath_fill_holes(3).iMath_fill_holes(6)
@@ -310,6 +315,23 @@ class noelTexturesPy:
                 if file.endswith('.nii.gz'):
                     zip_archive.write(os.path.join(folder, file), file, compress_type = zipfile.ZIP_DEFLATED)
         zip_archive.close()
+
+
+    def __deepbrain(self, p:float):
+        # convert an ANTsImage to Nibabel and load the 3d numpy image [H, W, D]
+        img = to_nibabel(self._t1_n4)
+        affine = img.affine
+        img = img.get_fdata()
+        ext = Extractor()
+        # `prob` will be a 3d numpy image containing probability 
+        # of being brain tissue for each of the voxels in `img`
+        prob = ext.run(img)
+        # mask can be obtained as:
+        mask = prob > p
+        brain_mask = (1 * mask).astype(np.uint8)
+        brain_mask = nib.Nifti1Image(brain_mask, affine)
+        return from_nibabel(brain_mask)
+
 
     def file_processor(self):
         start = time.time()

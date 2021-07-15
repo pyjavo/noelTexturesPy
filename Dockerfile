@@ -1,4 +1,4 @@
-FROM noelmni/pynoel-gui-fast:dev
+FROM noelmni/pynoel-gui-fast:deepbrain
 LABEL maintainer=<ravnoor@gmail.com>
 
 WORKDIR /noelpy
