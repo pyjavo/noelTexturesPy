@@ -1,10 +1,13 @@
-FROM noelmni/pynoel-gui-base:dev
+FROM noelmni/pynoel-gui-base:dashv2
 LABEL maintainer=<ravnoor@gmail.com>
+
+ENV HOME=/noelpy/home
 
 WORKDIR /noelpy
 
 COPY Procfile /noelpy
 COPY templates/* /noelpy/templates/
+COPY models/* /noelpy/models/
 COPY src/utils.py /noelpy
 COPY src/image_processing.py /noelpy
 COPY src/app.py /noelpy
