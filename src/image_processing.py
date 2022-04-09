@@ -1,5 +1,4 @@
 import os
-from tabnanny import verbose
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import sys
@@ -81,7 +80,10 @@ class noelTexturesPy:
         print("registration to MNI template space")
         if self._t1file != None and self._t2file != None:
             self._t1_reg = ants.registration(
-                fixed=self._icbm152, moving=self._t1, type_of_transform="Affine"
+                fixed=self._icbm152,
+                moving=self._t1,
+                type_of_transform="Affine",
+                aff_metric="GC",
             )
             self._t2_reg = ants.apply_transforms(
                 fixed=self._icbm152,
@@ -91,7 +93,10 @@ class noelTexturesPy:
 
         if self._t1file != None and self._t2file == None:
             self._t1_reg = ants.registration(
-                fixed=self._icbm152, moving=self._t1, type_of_transform="Affine"
+                fixed=self._icbm152,
+                moving=self._t1,
+                type_of_transform="Affine",
+                aff_metric="GC",
             )
 
         if self._t2file != None and self._t1file == None:
@@ -105,7 +110,10 @@ class noelTexturesPy:
         if self._t1file != None and self._t2file != None:
             self._t1_n4 = (
                 ants.iMath(
-                    self._t1_reg["warpedmovout"].abp_n4(usen3=self._usen3), "Normalize"
+                    self._t1_reg["warpedmovout"].abp_n4(
+                        intensity_truncation=(0.05, 0.95, 256), usen3=self._usen3
+                    ),
+                    "Normalize",
                 )
                 * 100
             )
@@ -124,7 +132,10 @@ class noelTexturesPy:
         if self._t1file != None and self._t2file == None:
             self._t1_n4 = (
                 ants.iMath(
-                    self._t1_reg["warpedmovout"].abp_n4(usen3=self._usen3), "Normalize"
+                    self._t1_reg["warpedmovout"].abp_n4(
+                        intensity_truncation=(0.05, 0.95, 256), usen3=self._usen3
+                    ),
+                    "Normalize",
                 )
                 * 100
             )
@@ -321,7 +332,7 @@ class noelTexturesPy:
                         os.remove(os.path.join("./qc", i))
 
     def __brain_extraction(self):
-        # https://antsx.github.io/ANTsPyNet/docs/build/html/utilitiese.html#applications
+        # https://antsx.github.io/ANTsPyNet/docs/build/html/utilities.html#applications
         if self._modality == "t1":
             image = self._t1_n4
         elif self._modality == "t2":
@@ -329,12 +340,7 @@ class noelTexturesPy:
         else:
             sys.exit("invalid contrast specified for brain extraction")
 
-        prob = brain_extraction(
-            image,
-            modality=self._modality,
-            antsxnet_cache_directory="/noelpy/models",
-            verbose=True,
-        )
+        prob = brain_extraction(image, modality=self._modality)
         # mask can be obtained as:
         mask = ants.threshold_image(
             prob, low_thresh=0.5, high_thresh=1.0, inval=1, outval=0, binary=True
