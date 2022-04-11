@@ -7,7 +7,6 @@ WORKDIR /noelpy
 
 COPY Procfile /noelpy
 COPY templates/* /noelpy/templates/
-COPY models/* /noelpy/models/
 COPY src/utils.py /noelpy
 COPY src/image_processing.py /noelpy
 COPY src/app.py /noelpy
